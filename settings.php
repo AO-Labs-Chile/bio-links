@@ -341,6 +341,9 @@ $fuentes_disponibles = ['Inter', 'Roboto', 'Montserrat', 'Poppins', 'Playfair Di
                 <a href="logout" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors font-bold">
                     <i class="fas fa-sign-out-alt"></i> <?= __('nav_logout') ?>
                 </a>
+                <div class="text-xs text-gray-400 dark:text-gray-500 text-center mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                    Versión: v<?= APP_VERSION ?>
+                </div>
             </div>
         </aside>
 
