@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# Si la solicitud no es un directorio
+RewriteCond %{REQUEST_FILENAME} !-d
+# Y el archivo con la extensión .php existe
+RewriteCond %{REQUEST_FILENAME}\.php -f
+# Oculta internamente la extensión .php
+RewriteRule ^(.*)$ $1.php [L]
+</IfModule>

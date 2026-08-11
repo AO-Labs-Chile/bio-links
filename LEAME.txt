@@ -1,0 +1,40 @@
+=========================================================
+      INSTRUCCIONES DE INSTALACIÓN - Bio Links CLON
+=========================================================
+
+¡Gracias por adquirir este script! 
+La instalación es sumamente sencilla y no requiere conocimientos de programación.
+
+PASO 1: SUBIR LOS ARCHIVOS
+---------------------------------------------------------
+1. Descomprime este archivo .zip en tu computadora.
+2. Sube todo el contenido a la carpeta pública de tu hosting web (generalmente llamada "public_html", "htdocs" o "www") utilizando el administrador de archivos de tu cPanel o mediante FTP.
+
+PASO 2: CREAR LA BASE DE DATOS
+---------------------------------------------------------
+1. Entra a tu panel de control de hosting (ej. cPanel).
+2. Ve a la sección "Bases de Datos MySQL" y crea una nueva base de datos.
+3. Crea un usuario para esa base de datos y asígnale una contraseña.
+4. Asocia el usuario a la base de datos otorgándole TODOS los privilegios.
+(Guarda el nombre de la base de datos, el usuario y la contraseña, los necesitarás en el siguiente paso).
+
+PASO 3: INSTALACIÓN AUTOMÁTICA
+---------------------------------------------------------
+1. Abre tu navegador web y ve a tu dominio (ej. https://tudominio.com).
+2. El sistema detectará que es la primera vez que se ejecuta y te redirigirá automáticamente al Asistente de Instalación.
+3. En el asistente, ingresa los datos de la base de datos que creaste en el PASO 2.
+4. Crea tus credenciales de Administrador (usuario y contraseña) para acceder al panel de control.
+5. Haz clic en "Instalar Ahora".
+
+PASO 4: SEGURIDAD (MUY IMPORTANTE)
+---------------------------------------------------------
+Una vez finalizada la instalación correctamente, por razones de seguridad:
+- Ingresa a tu administrador de archivos (cPanel o FTP).
+- Busca la carpeta llamada "install" en la raíz del proyecto.
+- ELIMINA la carpeta "install" por completo. Esto evitará que otra persona intente reinstalar el sistema o cambiar tu configuración.
+
+¡Y LISTO! 
+---------------------------------------------------------
+Ya puedes iniciar sesión desde https://tudominio.com/login.php usando el usuario administrador que creaste en el paso 3 y empezar a personalizar tu perfil y tus enlaces.
+
+Si tienes algún problema, contacta a soporte.

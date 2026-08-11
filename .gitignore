@@ -1,0 +1,35 @@
+# Base de datos y configuración sensible
+config.php
+config_jr.php
+debug_config.php
+
+# Archivos subidos por usuarios (Imágenes, etc.)
+uploads/
+
+# Registros de errores y archivos temporales
+error_log.txt
+*.log
+tmp/
+*.zip
+
+# Respaldos y scripts de migración locales
+remote_backup_20260722/
+replace_routes.py
+move_to_links.py
+root_redirect.php
+root.htaccess
+pass_results.txt
+pass_results.txt
+find_pass.py
+
+# Ignorar TODOS los scripts de Python (tienen contraseñas FTP)
+*.py
+
+# Ignorar carpeta antigua venta
+venta/
+
+# Archivos del sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
