@@ -64,6 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             $zip->extractTo(__DIR__);
                             $zip->close();
                             
+                            // Limpiar caché de PHP (OPcache) si está activa
+                            if (function_exists('opcache_reset')) {
+                                @opcache_reset();
+                            }
+                            
                             // 4. Ejecutar db_update.php si vino incluido en la actualización (para migraciones)
                             if (file_exists(__DIR__ . '/db_update.php')) {
                                 include __DIR__ . '/db_update.php';
