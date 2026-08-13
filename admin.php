@@ -1071,7 +1071,9 @@ $adminLogo = $stmtLogo->fetchColumn();
             status.className = 'text-xs text-blue-500 mt-2 h-4 font-bold';
             
             try {
-                const fd = new FormData(); fd.append('url', url);
+                // Codificar en Base64 para evitar bloqueos preventivos de WAF (ModSecurity SSRF Protection)
+                const encodedUrl = btoa(unescape(encodeURIComponent(url)));
+                const fd = new FormData(); fd.append('url', encodedUrl);
                 const res = await fetch('fetch_og_image.php', { method: 'POST', body: fd });
                 const json = await res.json();
                 

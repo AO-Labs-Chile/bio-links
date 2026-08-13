@@ -20,6 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $url = $_POST['url'] ?? '';
 
+// Decodificar Base64 si viene codificado (para evadir reglas SSRF de WAF/ModSecurity)
+if (!empty($url) && !filter_var($url, FILTER_VALIDATE_URL)) {
+    $decoded = @base64_decode($url, true);
+    if ($decoded !== false && filter_var($decoded, FILTER_VALIDATE_URL)) {
+        $url = $decoded;
+    }
+}
+
 if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
     echo json_encode(['error' => 'URL inválida']);
     exit;
