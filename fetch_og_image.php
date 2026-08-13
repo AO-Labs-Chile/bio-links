@@ -27,7 +27,38 @@ if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
 
 // Función híbrida para descargar HTML (más compatible)
 function fetch_html($url) {
-    // Intento 1: file_get_contents (si allow_url_fopen está habilitado)
+    // Intento 1: cURL (con cabeceras completas y cookies en memoria para evitar bucles de salas de espera)
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36');
+        
+        // Habilitar el motor de cookies en memoria para saltar protecciones tipo Queue-it
+        curl_setopt($ch, CURLOPT_COOKIEFILE, "");
+        
+        $headers = [
+            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language: es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3',
+            'Connection: keep-alive',
+            'Upgrade-Insecure-Requests: 1'
+        ];
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+        
+        $html = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($html !== false && !empty($html) && $http_code === 200) {
+            return $html;
+        }
+    }
+    
+    // Intento 2: file_get_contents (si cURL fallara o no estuviera, como respaldo básico)
     if (ini_get('allow_url_fopen')) {
         $options = [
             'http' => [
@@ -45,31 +76,6 @@ function fetch_html($url) {
         ];
         $context = stream_context_create($options);
         $html = @file_get_contents($url, false, $context);
-        if ($html !== false && !empty($html)) {
-            return $html;
-        }
-    }
-    
-    // Intento 2: cURL (con cabeceras completas de navegador para evitar 403)
-    if (function_exists('curl_init')) {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36');
-        
-        $headers = [
-            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language: es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3',
-            'Connection: keep-alive',
-            'Upgrade-Insecure-Requests: 1'
-        ];
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        $html = curl_exec($ch);
-        curl_close($ch);
         if ($html !== false && !empty($html)) {
             return $html;
         }
