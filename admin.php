@@ -327,7 +327,8 @@ $adminLogo = $stmtLogo->fetchColumn();
     </script>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
         function toggleInlineThumbnail(id) {
             const panel = document.getElementById('inline-thumb-' + id);
             if (panel) {
@@ -338,8 +339,7 @@ $adminLogo = $stmtLogo->fetchColumn();
                 }
             }
         }
-            
-</script>
+    </script>
 </head>
 
 <body class="bg-gray-50 dark:bg-gray-900 dark:bg-gray-900 text-gray-800 dark:text-gray-100 dark:text-gray-100 font-sans h-screen flex flex-col overflow-hidden transition-colors duration-300">
