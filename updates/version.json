@@ -1,5 +1,5 @@
 {
-    "version": "1.2.7",
-    "download_url": "https://japanrevolution.cl/links/updates/update_latest.zip?v=1.2.7",
-    "changelog": "Versión 1.2.7: Corrige error 404 del extractor de imágenes y ajusta diseño del botón Agregar Enlace."
+    "version": "1.2.8",
+    "download_url": "https://japanrevolution.cl/links/updates/update_latest.zip?v=1.2.8",
+    "changelog": "Versión 1.2.8: Migra el extractor de imágenes de file_get_contents a cURL para mayor compatibilidad."
 }

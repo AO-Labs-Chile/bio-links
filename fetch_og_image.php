@@ -25,27 +25,21 @@ if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
     exit;
 }
 
-// Configurar opciones de contexto para simular un navegador
-$options = [
-    'http' => [
-        'method' => 'GET',
-        'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36\r\n" .
-                    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n" .
-                    "Accept-Language: es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3\r\n"
-    ],
-    'ssl' => [
-        'verify_peer' => false,
-        'verify_peer_name' => false,
-    ]
-];
+// Obtener el HTML usando cURL (más robusto que file_get_contents y compatible con hostings que bloquean allow_url_fopen)
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+$html = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
 
-$context = stream_context_create($options);
-
-// Obtener el HTML
-$html = @file_get_contents($url, false, $context);
-
-if ($html === false) {
-    echo json_encode(['error' => 'No se pudo acceder a la URL']);
+if ($html === false || $http_code !== 200) {
+    echo json_encode(['error' => 'No se pudo acceder a la URL (HTTP ' . $http_code . ')']);
     exit;
 }
 
