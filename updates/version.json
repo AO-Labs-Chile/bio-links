@@ -1,5 +1,5 @@
 {
-    "version": "1.2.6",
-    "download_url": "https://japanrevolution.cl/links/updates/update_latest.zip?v=1.2.6",
-    "changelog": "Versión 1.2.6: Corrige error fatal de versión en Diseño y archivo admin.php truncado."
+    "version": "1.2.7",
+    "download_url": "https://japanrevolution.cl/links/updates/update_latest.zip?v=1.2.7",
+    "changelog": "Versión 1.2.7: Corrige error 404 del extractor de imágenes y ajusta diseño del botón Agregar Enlace."
 }

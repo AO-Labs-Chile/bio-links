@@ -418,7 +418,7 @@ $adminLogo = $stmtLogo->fetchColumn();
                 <script>setTimeout(()=>document.getElementById('msgAlert').style.display='none', 3000);</script>
             <?php endif; ?>
 
-            <div class="sticky top-0 z-30 bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm pb-4 pt-2 -mx-2 px-2" style="margin-top: -8px;">
+            <div class="sticky top-0 z-30 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm pb-4 pt-4 -mx-2 px-2">
                 <button onclick="openModal('add')" class="w-full bg-purple-600 text-white font-bold py-4 rounded-full shadow-lg hover:bg-purple-700 hover:scale-[1.01] transition-all flex justify-center items-center gap-2">
                     <i class="fas fa-plus"></i> Agregar Nuevo Enlace
                 </button>
