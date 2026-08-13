@@ -755,8 +755,11 @@ $adminLogo = $stmtLogo->fetchColumn();
                                     <i class="fas fa-magic"></i> Extraer de URL
                                 </button>
                             </div>
-                        </div>
                         <div id="fetchStatus" class="text-xs text-center mt-2 h-4 font-semibold text-gray-500 dark:text-gray-400"></div>
+                        <div id="magicImagePreviewContainer" class="hidden mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Selecciona una imagen capturada:</label>
+                            <div id="magicImageGrid" class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin"></div>
+                        </div>
                     </div>
 
                     <div class="modal-field" data-types="link,social,folder,concert,event">
@@ -869,12 +872,19 @@ $adminLogo = $stmtLogo->fetchColumn();
             if (window.quill) {
                 window.quill.root.innerHTML = isEdit ? (data.contenido_extra || '') : '';
             }
-            document.getElementById('modalProductora').value = isEdit ? data.productora : '';
             document.getElementById('modalCurrentImg').value = isEdit ? data.url_imagen : '';
             document.getElementById('modalImgFetch').value = '';
+            document.getElementById('fetchStatus').innerText = isEdit && data.url_imagen ? 'Tiene imagen guardada.' : '';
+            
+            // Limpiar selector de imágenes mágicas
+            const magicPreview = document.getElementById('magicImagePreviewContainer');
+            if (magicPreview) {
+                magicPreview.classList.add('hidden');
+                document.getElementById('magicImageGrid').innerHTML = '';
+            }
             document.getElementById('modalParentId').value = isEdit && data.parent_id ? data.parent_id : '';
             document.getElementById('modalDestacado').checked = isEdit && data.destacado == 1;
-            document.getElementById('fetchStatus').innerText = isEdit && data.url_imagen ? 'Tiene imagen guardada.' : '';
+            document.getElementById('modalProductora').value = isEdit ? data.productora : '';
             
             selectIcon(isEdit ? (data.icono || '') : '');
             selectBtnIcon(isEdit ? (data.btn_icono || '') : '');
@@ -973,30 +983,66 @@ $adminLogo = $stmtLogo->fetchColumn();
             const url = document.getElementById('modalUrl').value;
             const status = document.getElementById('fetchStatus');
             const hiddenImg = document.getElementById('modalImgFetch');
+            const previewContainer = document.getElementById('magicImagePreviewContainer');
+            const previewGrid = document.getElementById('magicImageGrid');
 
             if(!url) {
                 status.innerText = 'Pon una URL arriba primero.';
                 status.className = 'text-xs text-red-500 mt-2 h-4 font-bold';
                 return;
             }
+            
+            // Ocultar previsualizaciones previas
+            if (previewContainer) previewContainer.classList.add('hidden');
+            if (previewGrid) previewGrid.innerHTML = '';
+            hiddenImg.value = '';
+            
             status.innerText = 'Buscando imagen mágica...';
             status.className = 'text-xs text-blue-500 mt-2 h-4 font-bold';
+            
             try {
                 const fd = new FormData(); fd.append('url', url);
                 const res = await fetch('fetch_og_image.php', { method: 'POST', body: fd });
                 const json = await res.json();
-                if(json.success) {
-                    hiddenImg.value = json.image;
-                    status.innerText = '¡Imagen capturada con éxito!';
+                
+                if(json.success && json.images && json.images.length > 0) {
+                    status.innerText = '¡Imágenes encontradas! Elige una:';
                     status.className = 'text-xs text-green-600 mt-2 h-4 font-bold';
+                    
+                    // Renderizar las imágenes encontradas
+                    json.images.forEach((imgUrl, index) => {
+                        const imgEl = document.createElement('img');
+                        imgEl.src = imgUrl;
+                        imgEl.className = 'w-16 h-16 object-cover rounded-xl border-2 border-transparent hover:border-purple-500 cursor-pointer transition flex-shrink-0 bg-gray-200 dark:bg-gray-700';
+                        imgEl.onclick = () => selectMagicImage(imgUrl, imgEl);
+                        
+                        // Seleccionar la primera por defecto
+                        if (index === 0) {
+                            selectMagicImage(imgUrl, imgEl);
+                        }
+                        
+                        previewGrid.appendChild(imgEl);
+                    });
+                    
+                    if (previewContainer) previewContainer.classList.remove('hidden');
                 } else {
-                    status.innerText = json.error || 'No se encontró imagen.';
+                    status.innerText = json.error || 'No se encontraron imágenes en la URL.';
                     status.className = 'text-xs text-red-500 mt-2 h-4 font-bold';
                 }
             } catch (err) {
                 status.innerText = 'Error de conexión.';
                 status.className = 'text-xs text-red-500 mt-2 h-4 font-bold';
             }
+        }
+
+        function selectMagicImage(url, element) {
+            document.getElementById('modalImgFetch').value = url;
+            document.querySelectorAll('#magicImageGrid img').forEach(img => {
+                img.classList.remove('border-purple-600', 'ring-2', 'ring-purple-300');
+                img.classList.add('border-transparent');
+            });
+            element.classList.remove('border-transparent');
+            element.classList.add('border-purple-600', 'ring-2', 'ring-purple-300');
         }
 
         async function updateStatus(id, isVisible) {

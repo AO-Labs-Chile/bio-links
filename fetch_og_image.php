@@ -25,60 +25,129 @@ if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
     exit;
 }
 
-// Obtener el HTML usando cURL (más robusto que file_get_contents y compatible con hostings que bloquean allow_url_fopen)
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-$html = curl_exec($ch);
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
+// Función híbrida para descargar HTML (más compatible)
+function fetch_html($url) {
+    // Intento 1: file_get_contents (si allow_url_fopen está habilitado)
+    if (ini_get('allow_url_fopen')) {
+        $options = [
+            'http' => [
+                'method' => 'GET',
+                'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36\r\n" .
+                            "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n" .
+                            "Accept-Language: es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3\r\n" .
+                            "Connection: close\r\n",
+                'timeout' => 8
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            ]
+        ];
+        $context = stream_context_create($options);
+        $html = @file_get_contents($url, false, $context);
+        if ($html !== false && !empty($html)) {
+            return $html;
+        }
+    }
+    
+    // Intento 2: cURL (con cabeceras completas de navegador para evitar 403)
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36');
+        
+        $headers = [
+            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language: es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3',
+            'Connection: keep-alive',
+            'Upgrade-Insecure-Requests: 1'
+        ];
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        $html = curl_exec($ch);
+        curl_close($ch);
+        if ($html !== false && !empty($html)) {
+            return $html;
+        }
+    }
+    
+    return false;
+}
 
-if ($html === false || $http_code !== 200) {
-    echo json_encode(['error' => 'No se pudo acceder a la URL (HTTP ' . $http_code . ')']);
+$html = fetch_html($url);
+
+if ($html === false) {
+    echo json_encode(['error' => 'No se pudo acceder a la URL (Verifica la conexión o el bloqueo del sitio)']);
     exit;
 }
 
-// Buscar og:image usando expresiones regulares
-$image_url = '';
+// Buscar og:image y cualquier otra imagen
+$images = [];
 
-// Intento 1: og:image
-if (preg_match('/<meta[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $matches)) {
-    $image_url = $matches[1];
-} 
-// Intento 2: twitter:image
-elseif (preg_match('/<meta[^>]*name=["\']twitter:image["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $matches)) {
-    $image_url = $matches[1];
-} 
-// Intento 3: la primera imagen con un tamaño decente (heurística básica)
-elseif (preg_match('/<img[^>]*src=["\']([^"\']+)["\']/i', $html, $matches)) {
-    $image_url = $matches[1];
-}
-
-// Si la URL es relativa, intentar hacerla absoluta
-if (!empty($image_url) && !filter_var($image_url, FILTER_VALIDATE_URL)) {
-    $parsed_url = parse_url($url);
-    $base_url = $parsed_url['scheme'] . '://' . $parsed_url['host'];
-    
-    if (strpos($image_url, '//') === 0) {
-        $image_url = $parsed_url['scheme'] . ':' . $image_url;
-    } elseif (strpos($image_url, '/') === 0) {
-        $image_url = $base_url . $image_url;
-    } else {
-        $path = isset($parsed_url['path']) ? $parsed_url['path'] : '/';
-        $dir = dirname($path);
-        if ($dir == '\\' || $dir == '/') $dir = '';
-        $image_url = $base_url . $dir . '/' . $image_url;
+// 1. og:image
+if (preg_match_all('/<meta[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $matches)) {
+    foreach ($matches[1] as $img) {
+        if (!empty($img)) $images[] = $img;
     }
 }
 
-if (!empty($image_url)) {
-    echo json_encode(['success' => true, 'image' => $image_url]);
+// 2. twitter:image
+if (preg_match_all('/<meta[^>]*name=["\']twitter:image["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $matches)) {
+    foreach ($matches[1] as $img) {
+        if (!empty($img)) $images[] = $img;
+    }
+}
+
+// 3. Imágenes de etiqueta img
+if (preg_match_all('/<img[^>]*src=["\']([^"\']+)["\']/i', $html, $matches)) {
+    foreach ($matches[1] as $img) {
+        if (!empty($img) && strpos($img, 'spacer') === false && strpos($img, 'pixel') === false && strpos($img, 'tracker') === false) {
+            $images[] = $img;
+        }
+    }
+}
+
+// Limpiar y validar URLs
+$valid_images = [];
+$seen = [];
+foreach ($images as $image_url) {
+    $image_url = trim($image_url);
+    if (empty($image_url)) continue;
+    
+    if (!filter_var($image_url, FILTER_VALIDATE_URL)) {
+        $parsed_url = parse_url($url);
+        $base_url = $parsed_url['scheme'] . '://' . $parsed_url['host'];
+        
+        if (strpos($image_url, '//') === 0) {
+            $image_url = $parsed_url['scheme'] . ':' . $image_url;
+        } elseif (strpos($image_url, '/') === 0) {
+            $image_url = $base_url . $image_url;
+        } else {
+            $path = isset($parsed_url['path']) ? $parsed_url['path'] : '/';
+            $dir = dirname($path);
+            if ($dir == '\\' || $dir == '/') $dir = '';
+            $image_url = $base_url . $dir . '/' . $image_url;
+        }
+    }
+    
+    if (filter_var($image_url, FILTER_VALIDATE_URL)) {
+        if (!in_array($image_url, $seen)) {
+            $seen[] = $image_url;
+            $valid_images[] = $image_url;
+        }
+    }
+}
+
+// Limitar a las mejores 15 imágenes
+$valid_images = array_slice($valid_images, 0, 15);
+
+if (!empty($valid_images)) {
+    echo json_encode(['success' => true, 'images' => $valid_images]);
 } else {
-    echo json_encode(['error' => 'No se encontró imagen en la URL']);
+    echo json_encode(['error' => 'No se encontraron imágenes elegibles en la URL']);
 }
 ?>
