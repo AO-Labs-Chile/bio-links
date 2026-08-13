@@ -1,5 +1,5 @@
 {
-    "version": "1.4.0",
-    "download_url": "https://japanrevolution.cl/links/updates/update_latest.zip?v=1.4.0",
-    "changelog": "Versión 1.4.0: Añade un selector flotante (Popup Overlay) de imágenes candidatas y corrige la deformación en el formulario."
+    "version": "1.4.1",
+    "download_url": "https://japanrevolution.cl/links/updates/update_latest.zip?v=1.4.1",
+    "changelog": "Versión 1.4.1: Corrección de etiquetas div de flexbox en formulario admin y rediseño premium de la previsualización de imagen seleccionada."
 }
