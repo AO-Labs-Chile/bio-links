@@ -147,6 +147,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         return null;
     }
 
+    function downloadRemoteImage($url) {
+        if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+        
+        $path = parse_url($url, PHP_URL_PATH);
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+            $ext = 'jpg';
+        }
+        
+        if (!is_dir('uploads')) {
+            mkdir('uploads', 0755, true);
+        }
+        
+        $newName = uniqid('fetch_') . '.' . $ext;
+        $destination = 'uploads/' . $newName;
+        
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            $fp = fopen($destination, 'wb');
+            curl_setopt($ch, CURLOPT_FILE, $fp);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_COOKIEFILE, "");
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+            $success = curl_exec($ch);
+            curl_close($ch);
+            fclose($fp);
+            if ($success && file_exists($destination) && filesize($destination) > 0) {
+                return $destination;
+            }
+        }
+        
+        if (ini_get('allow_url_fopen')) {
+            $options = [
+                'http' => [
+                    'method' => 'GET',
+                    'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36\r\n" .
+                                "Connection: close\r\n",
+                    'timeout' => 10
+                ],
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                ]
+            ];
+            $context = stream_context_create($options);
+            $data = @file_get_contents($url, false, $context);
+            if ($data !== false && !empty($data)) {
+                if (file_put_contents($destination, $data) !== false) {
+                    return $destination;
+                }
+            }
+        }
+        
+        if (file_exists($destination)) {
+            @unlink($destination);
+        }
+        return null;
+    }
+
     if (isset($_POST['action']) && ($_POST['action'] === 'add_link' || $_POST['action'] === 'edit_link')) {
         $id = $_POST['id'] ?? 0;
         $titulo = $_POST['titulo'] ?? '';
@@ -168,7 +233,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($uploadedThumb) {
             $url_imagen = $uploadedThumb;
         } else if (!empty($_POST['url_imagen_fetch'])) {
-            $url_imagen = $_POST['url_imagen_fetch'];
+            $downloaded = downloadRemoteImage($_POST['url_imagen_fetch']);
+            if ($downloaded) {
+                $url_imagen = $downloaded;
+            } else {
+                $url_imagen = $_POST['url_imagen_fetch'];
+            }
         }
 
         if (!empty($titulo)) {
@@ -1005,44 +1075,59 @@ $adminLogo = $stmtLogo->fetchColumn();
                 const res = await fetch('fetch_og_image.php', { method: 'POST', body: fd });
                 const json = await res.json();
                 
-                if(json.success && json.images && json.images.length > 0) {
+                // Si la respuesta incluye 'image' y 'images' (o solo una), extraer y validar
+                const images = json.images || (json.image ? [json.image] : []);
+                
+                if(json.success && images.length > 0) {
                     status.innerText = '¡Imágenes encontradas! Elige una:';
                     status.className = 'text-xs text-green-600 mt-2 h-4 font-bold';
                     
-                    // Renderizar las imágenes encontradas
-                    json.images.forEach((imgUrl, index) => {
-                        const imgEl = document.createElement('img');
-                        imgEl.src = imgUrl;
-                        imgEl.className = 'w-16 h-16 object-cover rounded-xl border-2 border-transparent hover:border-purple-500 cursor-pointer transition flex-shrink-0 bg-gray-200 dark:bg-gray-700';
-                        imgEl.onclick = () => selectMagicImage(imgUrl, imgEl);
+                    // Renderizar las imágenes encontradas si el contenedor del grid existe
+                    if (previewGrid) {
+                        images.forEach((imgUrl, index) => {
+                            const imgEl = document.createElement('img');
+                            imgEl.src = imgUrl;
+                            imgEl.className = 'w-16 h-16 object-cover rounded-xl border-2 border-transparent hover:border-purple-500 cursor-pointer transition flex-shrink-0 bg-gray-200 dark:bg-gray-700';
+                            imgEl.onclick = () => selectMagicImage(imgUrl, imgEl);
+                            
+                            // Seleccionar la primera por defecto
+                            if (index === 0) {
+                                selectMagicImage(imgUrl, imgEl);
+                            }
+                            
+                            previewGrid.appendChild(imgEl);
+                        });
                         
-                        // Seleccionar la primera por defecto
-                        if (index === 0) {
-                            selectMagicImage(imgUrl, imgEl);
-                        }
-                        
-                        previewGrid.appendChild(imgEl);
-                    });
-                    
-                    if (previewContainer) previewContainer.classList.remove('hidden');
+                        if (previewContainer) previewContainer.classList.remove('hidden');
+                    } else {
+                        // Respaldo por si el HTML está cacheado sin el grid: asignar directamente la primera imagen
+                        hiddenImg.value = images[0];
+                        status.innerText = '¡Imagen capturada con éxito!';
+                    }
                 } else {
                     status.innerText = json.error || 'No se encontraron imágenes en la URL.';
                     status.className = 'text-xs text-red-500 mt-2 h-4 font-bold';
                 }
             } catch (err) {
-                status.innerText = 'Error de conexión.';
+                console.error(err);
+                status.innerText = 'Error de conexión o datos inválidos.';
                 status.className = 'text-xs text-red-500 mt-2 h-4 font-bold';
             }
         }
 
         function selectMagicImage(url, element) {
             document.getElementById('modalImgFetch').value = url;
-            document.querySelectorAll('#magicImageGrid img').forEach(img => {
-                img.classList.remove('border-purple-600', 'ring-2', 'ring-purple-300');
-                img.classList.add('border-transparent');
-            });
-            element.classList.remove('border-transparent');
-            element.classList.add('border-purple-600', 'ring-2', 'ring-purple-300');
+            const grid = document.getElementById('magicImageGrid');
+            if (grid) {
+                document.querySelectorAll('#magicImageGrid img').forEach(img => {
+                    img.classList.remove('border-purple-600', 'ring-2', 'ring-purple-300');
+                    img.classList.add('border-transparent');
+                });
+                if (element) {
+                    element.classList.remove('border-transparent');
+                    element.classList.add('border-purple-600', 'ring-2', 'ring-purple-300');
+                }
+            }
         }
 
         async function updateStatus(id, isVisible) {

@@ -152,7 +152,11 @@ foreach ($images as $image_url) {
 $valid_images = array_slice($valid_images, 0, 15);
 
 if (!empty($valid_images)) {
-    echo json_encode(['success' => true, 'images' => $valid_images]);
+    echo json_encode([
+        'success' => true, 
+        'image' => $valid_images[0], // Retrocompatibilidad para JS en caché
+        'images' => $valid_images
+    ]);
 } else {
     echo json_encode(['error' => 'No se encontraron imágenes elegibles en la URL']);
 }
