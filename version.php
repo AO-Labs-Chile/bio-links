@@ -11,5 +11,5 @@
  */
 // Archivo de versión
 // No modifique este archivo manualmente. Es utilizado por el sistema de actualizaciones.
-define('APP_VERSION', '1.3.2');
+define('APP_VERSION', '1.4.0');
 ?>

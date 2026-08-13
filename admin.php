@@ -826,9 +826,15 @@ $adminLogo = $stmtLogo->fetchColumn();
                                 </button>
                             </div>
                         <div id="fetchStatus" class="text-xs text-center mt-2 h-4 font-semibold text-gray-500 dark:text-gray-400"></div>
-                        <div id="magicImagePreviewContainer" class="hidden mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Selecciona una imagen capturada:</label>
-                            <div id="magicImageGrid" class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin"></div>
+                        <div id="magicImagePreviewContainer" class="hidden mt-3 flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+                            <img id="magicSelectedImagePreview" src="" class="w-12 h-12 object-cover rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-700">
+                            <div class="flex-1">
+                                <div class="text-xs font-bold text-green-600 dark:text-green-400">¡Imagen Seleccionada!</div>
+                                <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[200px]" id="magicSelectedImageName"></div>
+                            </div>
+                            <button type="button" onclick="openMagicImagePopup()" class="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-bold text-xs rounded-xl transition">
+                                Cambiar
+                            </button>
                         </div>
                     </div>
 
@@ -1055,6 +1061,8 @@ $adminLogo = $stmtLogo->fetchColumn();
             const hiddenImg = document.getElementById('modalImgFetch');
             const previewContainer = document.getElementById('magicImagePreviewContainer');
             const previewGrid = document.getElementById('magicImageGrid');
+            const previewImg = document.getElementById('magicSelectedImagePreview');
+            const previewName = document.getElementById('magicSelectedImageName');
 
             if(!url) {
                 status.innerText = 'Pon una URL arriba primero.';
@@ -1067,7 +1075,7 @@ $adminLogo = $stmtLogo->fetchColumn();
             if (previewGrid) previewGrid.innerHTML = '';
             hiddenImg.value = '';
             
-            status.innerText = 'Buscando imagen mágica...';
+            status.innerText = 'Buscando imágenes...';
             status.className = 'text-xs text-blue-500 mt-2 h-4 font-bold';
             
             try {
@@ -1081,30 +1089,40 @@ $adminLogo = $stmtLogo->fetchColumn();
                 const images = json.images || (json.image ? [json.image] : []);
                 
                 if(json.success && images.length > 0) {
-                    status.innerText = '¡Imágenes encontradas! Elige una:';
+                    status.innerText = '¡Imágenes encontradas con éxito!';
                     status.className = 'text-xs text-green-600 mt-2 h-4 font-bold';
                     
-                    // Renderizar las imágenes encontradas si el contenedor del grid existe
+                    // Renderizar las imágenes encontradas si el contenedor del grid del popup existe
                     if (previewGrid) {
                         images.forEach((imgUrl, index) => {
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'relative aspect-square rounded-2xl overflow-hidden cursor-pointer border-4 border-transparent hover:border-purple-500 transition-all bg-gray-100 dark:bg-gray-800 shadow-sm';
+                            wrapper.onclick = () => {
+                                selectMagicImage(imgUrl, wrapper);
+                                closeMagicImagePopup();
+                            };
+                            
                             const imgEl = document.createElement('img');
                             imgEl.src = imgUrl;
-                            imgEl.className = 'w-16 h-16 object-cover rounded-xl border-2 border-transparent hover:border-purple-500 cursor-pointer transition flex-shrink-0 bg-gray-200 dark:bg-gray-700';
-                            imgEl.onclick = () => selectMagicImage(imgUrl, imgEl);
+                            imgEl.className = 'w-full h-full object-cover';
+                            wrapper.appendChild(imgEl);
                             
                             // Seleccionar la primera por defecto
                             if (index === 0) {
-                                selectMagicImage(imgUrl, imgEl);
+                                selectMagicImage(imgUrl, wrapper);
                             }
                             
-                            previewGrid.appendChild(imgEl);
+                            previewGrid.appendChild(wrapper);
                         });
                         
-                        if (previewContainer) previewContainer.classList.remove('hidden');
+                        // Abrir el selector popup
+                        openMagicImagePopup();
                     } else {
                         // Respaldo por si el HTML está cacheado sin el grid: asignar directamente la primera imagen
                         hiddenImg.value = images[0];
-                        status.innerText = '¡Imagen capturada con éxito!';
+                        if (previewImg) previewImg.src = images[0];
+                        if (previewName) previewName.innerText = images[0].split('/').pop() || 'imagen';
+                        if (previewContainer) previewContainer.classList.remove('hidden');
                     }
                 } else {
                     status.innerText = json.error || 'No se encontraron imágenes en la URL.';
@@ -1119,15 +1137,27 @@ $adminLogo = $stmtLogo->fetchColumn();
 
         function selectMagicImage(url, element) {
             document.getElementById('modalImgFetch').value = url;
+            
+            const previewImg = document.getElementById('magicSelectedImagePreview');
+            const previewName = document.getElementById('magicSelectedImageName');
+            const previewContainer = document.getElementById('magicImagePreviewContainer');
+            
+            if (previewImg) previewImg.src = url;
+            if (previewName) {
+                const filename = url.split('/').pop() || 'imagen';
+                previewName.innerText = filename.length > 25 ? filename.substring(0, 22) + '...' : filename;
+            }
+            if (previewContainer) previewContainer.classList.remove('hidden');
+            
             const grid = document.getElementById('magicImageGrid');
             if (grid) {
-                document.querySelectorAll('#magicImageGrid img').forEach(img => {
-                    img.classList.remove('border-purple-600', 'ring-2', 'ring-purple-300');
-                    img.classList.add('border-transparent');
+                grid.querySelectorAll('div').forEach(div => {
+                    div.classList.remove('border-purple-600', 'ring-4', 'ring-purple-300/50');
+                    div.classList.add('border-transparent');
                 });
                 if (element) {
                     element.classList.remove('border-transparent');
-                    element.classList.add('border-purple-600', 'ring-2', 'ring-purple-300');
+                    element.classList.add('border-purple-600', 'ring-4', 'ring-purple-300/50');
                 }
             }
         }
@@ -1364,7 +1394,59 @@ $adminLogo = $stmtLogo->fetchColumn();
                 }
             });
         }
+
+        function openMagicImagePopup() {
+            const popup = document.getElementById('magicImagePopup');
+            const card = document.getElementById('magicPopupCard');
+            if (popup && card) {
+                popup.classList.remove('hidden');
+                popup.offsetHeight; // force reflow
+                popup.classList.remove('opacity-0');
+                card.classList.remove('scale-95');
+                card.classList.add('scale-100');
+            }
+        }
+
+        function closeMagicImagePopup() {
+            const popup = document.getElementById('magicImagePopup');
+            const card = document.getElementById('magicPopupCard');
+            if (popup && card) {
+                popup.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    popup.classList.add('hidden');
+                }, 300);
+            }
+        }
     </script>
 
+    <!-- Modal Selector de Imágenes Mágicas (Popup) -->
+    <div id="magicImagePopup" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full mx-4 overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800 transform scale-95 transition-transform duration-300 animate-fade-in" id="magicPopupCard">
+            <!-- Cabecera -->
+            <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+                <div>
+                    <h3 class="text-base font-bold text-gray-800 dark:text-white">Imágenes Encontradas</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-sans">Elige la imagen que deseas asignar a este enlace</p>
+                </div>
+                <button type="button" onclick="closeMagicImagePopup()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <!-- Contenido -->
+            <div class="p-5 max-h-[300px] overflow-y-auto">
+                <div id="magicImageGrid" class="grid grid-cols-3 gap-3">
+                    <!-- Se rellena dinámicamente -->
+                </div>
+            </div>
+            <!-- Pie -->
+            <div class="p-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
+                <button type="button" onclick="closeMagicImagePopup()" class="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-xl transition">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
