@@ -1,0 +1,45 @@
+# PT:Kurage - Configuración Apache
+AddDefaultCharset UTF-8
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Bloquear acceso a archivos sensibles
+<FilesMatch "(\.sqlite|\.db|\.json|\.env|\.log)$">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /ptkurage/
+
+  # 1. Redirigir solicitudes externas directas de index.php a /ptkurage/
+  RewriteCond %{THE_REQUEST} \s/ptkurage/index\.php[?\s] [NC]
+  RewriteRule ^index\.php$ /ptkurage/ [R=301,L]
+
+  # 2. Redirigir solicitudes GET externas con .php a su versión limpia sin extensión
+  # (Se excluye POST para no alterar peticiones fetch o Webhooks de Resend)
+  RewriteCond %{REQUEST_METHOD} !POST
+  RewriteCond %{THE_REQUEST} \s/ptkurage/([a-zA-Z0-9_-]+)\.php(\?[^\s]*)?\s [NC]
+  RewriteRule ^([a-zA-Z0-9_-]+)\.php$ /ptkurage/$1 [R=301,L]
+
+  # 3. Quitar barra final para URLs de archivos virtuales (ej. /admin/ -> /admin)
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^([a-zA-Z0-9_-]+)/$ /ptkurage/$1 [R=301,L]
+
+  # 4. Servir directamente archivos y carpetas reales existentes (imágenes, CSS, JS, etc.)
+  RewriteCond %{REQUEST_FILENAME} -d [OR]
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+
+  # 5. Reescribir internamente rutas limpias a su archivo .php correspondiente
+  RewriteCond %{REQUEST_FILENAME}\.php -f
+  RewriteRule ^([a-zA-Z0-9_-]+)$ $1.php [L,QSA]
+</IfModule>

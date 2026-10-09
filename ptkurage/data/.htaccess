@@ -1,0 +1,3 @@
+# Proteger directorio de datos
+Order deny,allow
+Deny from all

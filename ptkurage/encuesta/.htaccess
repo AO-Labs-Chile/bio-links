@@ -1,0 +1,43 @@
+# Encuesta PT:Kurage - Apache Configuration
+AddDefaultCharset UTF-8
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+<FilesMatch "(\.sqlite|\.db|\.json|\.env|\.log)$">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /ptkurage/encuesta/
+
+  # 1. Redirigir index.php a la raíz de la encuesta
+  RewriteCond %{THE_REQUEST} \s/ptkurage/encuesta/index\.php[?\s] [NC]
+  RewriteRule ^index\.php$ ./ [R=301,L]
+
+  # 2. Redirigir GET externos con .php a sin extensión
+  RewriteCond %{REQUEST_METHOD} !POST
+  RewriteCond %{THE_REQUEST} \s/ptkurage/encuesta/([a-zA-Z0-9_-]+)\.php(\?[^\s]*)?\s [NC]
+  RewriteRule ^([a-zA-Z0-9_-]+)\.php$ $1 [R=301,L]
+
+  # 3. Quitar slash final para archivos virtuales
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^([a-zA-Z0-9_-]+)/$ $1 [R=301,L]
+
+  # 4. Servir archivos reales (imágenes, CSS, JS, etc.)
+  RewriteCond %{REQUEST_FILENAME} -d [OR]
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+
+  # 5. Reescribir internamente rutas limpias
+  RewriteCond %{REQUEST_FILENAME}\.php -f
+  RewriteRule ^([a-zA-Z0-9_-]+)$ $1.php [L,QSA]
+</IfModule>

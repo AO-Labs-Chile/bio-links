@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Descuento Plastic Tree - PT:Kurage & RIT</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #374151;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      table-layout: fixed;
+      background-color: #f3f4f6;
+      padding: 30px 10px;
+    }
+    .content-table {
+      max-width: 580px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    .header-img {
+      width: 100%;
+      max-width: 580px;
+      height: auto;
+      display: block;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .body-content {
+      padding: 35px 32px 30px;
+      font-size: 15px;
+      line-height: 1.65;
+      color: #374151;
+    }
+    .greeting {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 18px;
+    }
+    p {
+      margin: 0 0 16px;
+    }
+    .code-label {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+      margin: 22px 0 10px;
+    }
+    .code-box {
+      border: 1px solid #111827;
+      background-color: #ffffff;
+      padding: 16px 20px;
+      text-align: center;
+      margin: 0 0 22px;
+    }
+    .code-value {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #111827;
+      display: inline-block;
+    }
+    .note {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #4b5563;
+      margin: 0 0 14px;
+    }
+    .important-clause {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 25px;
+    }
+    .btn-tickets-wrapper {
+      text-align: center;
+      margin: 28px 0 20px;
+    }
+    .btn-tickets {
+      display: inline-block;
+      background-color: #000000;
+      color: #ffffff !important;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 14px 48px;
+      text-transform: uppercase;
+      border-radius: 2px;
+    }
+    .footer {
+      border-top: 1px solid #e5e7eb;
+      background-color: #ffffff;
+      padding: 22px 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+    .footer a {
+      color: #6b7280;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <table class="wrapper" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center">
+        <table class="content-table" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <!-- Cabecera Gráfica del Tour -->
+          <tr>
+            <td align="center" style="padding: 0; line-height: 0; background-color: #0f1013;">
+              <img src="https://japanrevolution.cl/ptkurage/assets/cabecera-mail.png" alt="Plastic Tree - REPLAY LATAM TOUR 2027" class="header-img" style="width: 100%; max-width: 580px; height: auto; display: block;" />
+            </td>
+          </tr>
+
+          <!-- Cuerpo del Correo -->
+          <tr>
+            <td class="body-content">
+              <div class="greeting">¡Felicidades!</div>
+
+              <p>Has recibido un <strong>{PORCENTAJE}% de descuento</strong> por haber participado en la encuesta realizada por el Fan Club.</p>
+
+              <p>Gracias a esa encuesta, nosotros en <strong>RIT</strong> pudimos conocer el interés real del público, acercarnos a la banda y finalmente concretar el contrato.</p>
+
+              <p>Como agradecimiento por tu apoyo y participación, realizamos esta colaboración directa con el fan club oficial para ofrecerte este beneficio exclusivo.</p>
+
+              <div class="code-label">Este es tu código personal de descuento:</div>
+              <div class="code-box">
+                <span class="code-value">{CODIGO}</span>
+              </div>
+
+              <p class="note">
+                Utilízalo el <strong>03 de octubre de 2026</strong> al comprar tu entrada. Este código es personal, de un solo uso y será válido únicamente durante ese día.
+              </p>
+
+              <p class="important-clause">
+                Este descuento se aplica exclusivamente a la entrada General.
+              </p>
+
+              <div class="btn-tickets-wrapper">
+                <a href="{TICKETS_URL}" target="_blank" class="btn-tickets">TICKETS</a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Pie de Página -->
+          <tr>
+            <td class="footer">
+              <a href="https://www.instagram.com/pt_kurage" target="_blank" rel="noopener noreferrer">PT:Kurage — Plastic Tree Fan Community</a><br>
+              En colaboración con <a href="https://www.rit.agency/" target="_blank" rel="noopener noreferrer">R.I.T</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
